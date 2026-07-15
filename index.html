@@ -52,8 +52,13 @@
   .date-picker-row input{flex:1;}
   .icon-btn{border:none; background:var(--surface-alt); width:38px; height:38px; border-radius:10px; font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink); flex-shrink:0;}
   .icon-btn:active{transform:scale(0.94);}
-  .field-row{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;}
+  .field-row{display:flex; gap:6px; margin-bottom:12px;}
   .field-row > div{flex:1; min-width:70px;}
+  .field-row.med-row > div:first-child{flex:0 0 60px;}
+  .field-row.med-row > div:nth-child(2){flex:1;}
+  .field-row.caf-row > div:first-child{flex:0 0 55px;}
+  .field-row.caf-row > div:nth-child(2){flex:0 0 55px;}
+  .field-row.caf-row > div:nth-child(3){flex:1;}
   .field-row:last-child{margin-bottom:0;}
   .slider-block{margin-bottom:16px;}
   .slider-block:last-child{margin-bottom:0;}
@@ -137,7 +142,7 @@
 
     <div class="card">
       <h2><span class="dot" style="background:var(--teal)"></span>Medication</h2>
-      <div class="field-row">
+      <div class="field-row med-row">
         <div>
           <label class="field-label">Ritalin AM (mg)</label>
           <input type="number" id="ritAmMg" min="0" step="0.5">
@@ -147,7 +152,7 @@
           <input type="time" id="ritAmTime">
         </div>
       </div>
-      <div class="field-row">
+      <div class="field-row med-row">
         <div>
           <label class="field-label">Ritalin Lunch (mg)</label>
           <input type="number" id="ritLunchMg" min="0" step="0.5">
@@ -206,7 +211,7 @@
 
     <div class="card">
       <h2>Caffeine</h2>
-      <div class="field-row">
+      <div class="field-row caf-row">
         <div><label class="field-label">Type</label><input type="text" id="caffType" placeholder="Coffee"></div>
         <div><label class="field-label">Amount</label><input type="text" id="caffAmount" placeholder="12oz"></div>
         <div><label class="field-label">Time</label><input type="time" id="caffTime"></div>
