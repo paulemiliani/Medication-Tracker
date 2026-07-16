@@ -205,11 +205,11 @@
 
     <div class="card">
       <h2>Ratings</h2>
-      <div class="slider-block"><div class="slider-head"><span>Mood</span><span class="val mono" id="moodVal">5</span></div><input type="range" id="moodSlider" min="1" max="10" value="5"></div>
-      <div class="slider-block"><div class="slider-head"><span>Motivation</span><span class="val mono" id="motVal">5</span></div><input type="range" id="motSlider" min="1" max="10" value="5"></div>
-      <div class="slider-block"><div class="slider-head"><span>Focus</span><span class="val mono" id="focusVal">5</span></div><input type="range" id="focusSlider" min="1" max="10" value="5"></div>
-      <div class="slider-block"><div class="slider-head"><span>Energy</span><span class="val mono" id="energyVal">5</span></div><input type="range" id="energySlider" min="1" max="10" value="5"></div>
-      <div class="slider-block"><div class="slider-head"><span>Anxiety</span><span class="val mono" id="anxVal">5</span></div><input type="range" id="anxSlider" min="1" max="10" value="5"></div>
+      <div class="slider-block"><div class="slider-head"><span>Overall Well-Being</span><span style="font-weight:600; color:var(--teal);"><span id="wellBeingLabel">Okay</span> <span class="val mono" id="wellBeingVal">5</span> / 10</span></div><input type="range" id="wellBeingSlider" min="1" max="10" value="5"></div>
+      <div class="slider-block"><div class="slider-head"><span>Motivation</span><span style="font-weight:600; color:var(--teal);"><span id="motivationLabel">Average</span> <span class="val mono" id="motivationVal">5</span> / 10</span></div><input type="range" id="motivationSlider" min="1" max="10" value="5"></div>
+      <div class="slider-block"><div class="slider-head"><span>Focus</span><span style="font-weight:600; color:var(--teal);"><span id="focusLabel">Average</span> <span class="val mono" id="focusVal">5</span> / 10</span></div><input type="range" id="focusSlider" min="1" max="10" value="5"></div>
+      <div class="slider-block"><div class="slider-head"><span>Energy</span><span style="font-weight:600; color:var(--teal);"><span id="energyLabel">Normal</span> <span class="val mono" id="energyVal">5</span> / 10</span></div><input type="range" id="energySlider" min="1" max="10" value="5"></div>
+      <div class="slider-block"><div class="slider-head"><span>Anxiety</span><span style="font-weight:600; color:var(--teal);"><span id="anxietyLabel">Noticeably Anxious</span> <span class="val mono" id="anxietyVal">5</span> / 10</span></div><input type="range" id="anxietySlider" min="1" max="10" value="5"></div>
     </div>
 
     <div class="card">
@@ -238,8 +238,8 @@
           <input type="number" id="sleepHrs" min="0" max="16" step="0.5">
         </div>
         <div>
-          <div class="slider-head"><span class="field-label" style="margin:0">Quality</span><span class="val mono" id="sleepQualVal">5</span></div>
-          <input type="range" id="sleepQualSlider" min="1" max="10" value="5">
+          <div class="slider-head"><span class="field-label" style="margin:0">Sleep Quality</span><span style="font-weight:600; color:var(--teal); font-size:14px;"><span id="sleepQualityLabel">Okay</span> <span class="val mono" id="sleepQualVal">5</span> / 10</span></div>
+          <input type="range" id="sleepQualitySlider" min="1" max="10" value="5">
         </div>
       </div>
     </div>
@@ -334,6 +334,35 @@
 <script>
 let state = { entries: {}, currentDate: todayKey() };
 
+// 5-anchor label maps for sliders
+const wellBeingLabels = {
+  1: 'Very Low', 3: 'Down', 5: 'Okay', 7: 'Good', 10: 'Great'
+};
+const motivationLabels = {
+  1: 'Couldn\'t Get Started', 3: 'Had to Push Myself', 5: 'Average', 7: 'Motivated', 10: 'Driven'
+};
+const focusLabels = {
+  1: 'Couldn\'t Focus', 3: 'Easily Distracted', 5: 'Average', 7: 'Focused', 10: 'Flow State'
+};
+const energyLabels = {
+  1: 'Exhausted', 3: 'Low', 5: 'Normal', 7: 'Energetic', 10: 'Couldn\'t Stop Moving'
+};
+const anxietyLabels = {
+  1: 'Calm', 3: 'Slightly Anxious', 5: 'Noticeably Anxious', 7: 'Hard to Relax', 10: 'Overwhelming'
+};
+const sleepQualityLabels = {
+  1: 'Terrible', 3: 'Restless', 5: 'Okay', 7: 'Restorative', 10: 'Best Sleep'
+};
+
+// Get the nearest anchor label for a given value
+function getLabel(value, labelMap) {
+  const anchors = [1, 3, 5, 7, 10];
+  const closest = anchors.reduce((prev, curr) => 
+    Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+  );
+  return labelMap[closest];
+}
+
 function todayKey(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function shiftDate(key, delta){ const d = new Date(key+"T00:00:00"); d.setDate(d.getDate()+delta); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function niceDate(key){ const d = new Date(key+"T00:00:00"); return d.toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'}); }
@@ -351,12 +380,12 @@ function emptyEntry(){
 
 async function loadAll(){
   try{
-    const res = await window.storage.get('tracker-entries', false);
-    state.entries = res && res.value ? JSON.parse(res.value) : {};
+    const stored = localStorage.getItem('tracker-entries');
+    state.entries = stored ? JSON.parse(stored) : {};
   }catch(e){ state.entries = {}; }
 }
 async function persistEntries(){
-  try{ await window.storage.set('tracker-entries', JSON.stringify(state.entries), false); }
+  try{ localStorage.setItem('tracker-entries', JSON.stringify(state.entries)); }
   catch(e){ console.error('save failed', e); }
 }
 
@@ -402,15 +431,31 @@ function loadEntryIntoForm(dateKey){
   document.getElementById('ritLunchMg').value = entry.ritLunchMg ?? '';
   document.getElementById('ritLunchTime').value = entry.ritLunchTime || '';
   document.getElementById('lexMg').value = entry.lexMg ?? '';
-  document.getElementById('moodSlider').value = entry.mood ?? 5; document.getElementById('moodVal').textContent = entry.mood ?? 5;
-  document.getElementById('motSlider').value = entry.motivation ?? 5; document.getElementById('motVal').textContent = entry.motivation ?? 5;
-  document.getElementById('focusSlider').value = entry.focus ?? 5; document.getElementById('focusVal').textContent = entry.focus ?? 5;
-  document.getElementById('energySlider').value = entry.energy ?? 5; document.getElementById('energyVal').textContent = entry.energy ?? 5;
-  document.getElementById('anxSlider').value = entry.anxiety ?? 5; document.getElementById('anxVal').textContent = entry.anxiety ?? 5;
+  document.getElementById('wellBeingSlider').value = entry.mood ?? 5; 
+  document.getElementById('wellBeingVal').textContent = entry.mood ?? 5; 
+  document.getElementById('wellBeingLabel').textContent = getLabel(entry.mood ?? 5, wellBeingLabels);
+  
+  document.getElementById('motivationSlider').value = entry.motivation ?? 5; 
+  document.getElementById('motivationVal').textContent = entry.motivation ?? 5; 
+  document.getElementById('motivationLabel').textContent = getLabel(entry.motivation ?? 5, motivationLabels);
+  
+  document.getElementById('focusSlider').value = entry.focus ?? 5; 
+  document.getElementById('focusVal').textContent = entry.focus ?? 5;
+  document.getElementById('focusLabel').textContent = getLabel(entry.focus ?? 5, focusLabels);
+  
+  document.getElementById('energySlider').value = entry.energy ?? 5; 
+  document.getElementById('energyVal').textContent = entry.energy ?? 5;
+  document.getElementById('energyLabel').textContent = getLabel(entry.energy ?? 5, energyLabels);
+  
+  document.getElementById('anxietySlider').value = entry.anxiety ?? 5; 
+  document.getElementById('anxietyVal').textContent = entry.anxiety ?? 5; 
+  document.getElementById('anxietyLabel').textContent = getLabel(entry.anxiety ?? 5, anxietyLabels);
   setSegmented('emoRangeSeg', entry.emotionalRange);
   setSegmented('appetiteSeg', entry.appetite);
   document.getElementById('sleepHrs').value = entry.sleepHours ?? '';
-  document.getElementById('sleepQualSlider').value = entry.sleepQuality ?? 5; document.getElementById('sleepQualVal').textContent = entry.sleepQuality ?? 5;
+  document.getElementById('sleepQualitySlider').value = entry.sleepQuality ?? 5; 
+  document.getElementById('sleepQualVal').textContent = entry.sleepQuality ?? 5;
+  document.getElementById('sleepQualityLabel').textContent = getLabel(entry.sleepQuality ?? 5, sleepQualityLabels);
   document.getElementById('caffType').value = '';
   document.getElementById('caffAmount').value = '';
   document.getElementById('caffTime').value = '';
@@ -435,15 +480,15 @@ function collectFormEntry(){
   entry.ritLunchMg = document.getElementById('ritLunchMg').value ? Number(document.getElementById('ritLunchMg').value) : null;
   entry.ritLunchTime = document.getElementById('ritLunchTime').value || null;
   entry.lexMg = document.getElementById('lexMg').value ? Number(document.getElementById('lexMg').value) : null;
-  entry.mood = Number(document.getElementById('moodSlider').value);
-  entry.motivation = Number(document.getElementById('motSlider').value);
+  entry.mood = Number(document.getElementById('wellBeingSlider').value);
+  entry.motivation = Number(document.getElementById('motivationSlider').value);
   entry.focus = Number(document.getElementById('focusSlider').value);
   entry.energy = Number(document.getElementById('energySlider').value);
-  entry.anxiety = Number(document.getElementById('anxSlider').value);
+  entry.anxiety = Number(document.getElementById('anxietySlider').value);
   entry.emotionalRange = document.querySelector('#emoRangeSeg button.active')?.dataset.val || null;
   entry.appetite = document.querySelector('#appetiteSeg button.active')?.dataset.val || null;
   entry.sleepHours = document.getElementById('sleepHrs').value ? Number(document.getElementById('sleepHrs').value) : null;
-  entry.sleepQuality = Number(document.getElementById('sleepQualSlider').value);
+  entry.sleepQuality = Number(document.getElementById('sleepQualitySlider').value);
   entry.sideEffects = document.getElementById('sideEffects').value;
   entry.nicotine = document.getElementById('nicotineText').value;
   entry.oneWin = document.getElementById('oneWin').value;
@@ -459,9 +504,30 @@ function setupLogTab(){
   document.getElementById('dateFwd').onclick = ()=>{ state.currentDate = shiftDate(state.currentDate, 1); loadEntryIntoForm(state.currentDate); };
   document.getElementById('entryDate').onchange = (e)=>{ state.currentDate = e.target.value; loadEntryIntoForm(state.currentDate); };
 
-  ['mood','mot','focus','energy','anx','sleepQual'].forEach(prefix=>{
-    document.getElementById(prefix+'Slider').oninput = (e)=> document.getElementById(prefix+'Val').textContent = e.target.value;
-  });
+  document.getElementById('wellBeingSlider').oninput = (e)=> {
+    document.getElementById('wellBeingVal').textContent = e.target.value;
+    document.getElementById('wellBeingLabel').textContent = getLabel(Number(e.target.value), wellBeingLabels);
+  };
+  document.getElementById('motivationSlider').oninput = (e)=> {
+    document.getElementById('motivationVal').textContent = e.target.value;
+    document.getElementById('motivationLabel').textContent = getLabel(Number(e.target.value), motivationLabels);
+  };
+  document.getElementById('focusSlider').oninput = (e)=> {
+    document.getElementById('focusVal').textContent = e.target.value;
+    document.getElementById('focusLabel').textContent = getLabel(Number(e.target.value), focusLabels);
+  };
+  document.getElementById('energySlider').oninput = (e)=> {
+    document.getElementById('energyVal').textContent = e.target.value;
+    document.getElementById('energyLabel').textContent = getLabel(Number(e.target.value), energyLabels);
+  };
+  document.getElementById('anxietySlider').oninput = (e)=> {
+    document.getElementById('anxietyVal').textContent = e.target.value;
+    document.getElementById('anxietyLabel').textContent = getLabel(Number(e.target.value), anxietyLabels);
+  };
+  document.getElementById('sleepQualitySlider').oninput = (e)=> {
+    document.getElementById('sleepQualVal').textContent = e.target.value;
+    document.getElementById('sleepQualityLabel').textContent = getLabel(Number(e.target.value), sleepQualityLabels);
+  };
 
   wireSegmented('emoRangeSeg', ()=>{});
   wireSegmented('appetiteSeg', ()=>{});
